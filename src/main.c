@@ -84,13 +84,15 @@ int main(int argc , char *argv[])
 	int i;
 	int ret_val;
 
-	int retries;
+
 
 	s = (float **)malloc(SIGNALS_NUM * sizeof(float *));
 	for(i = 0; i < SIGNALS_NUM; i++) {
 		s[i] = (float *)malloc(SIGNAL_LENGTH * sizeof(float));
 	}
 	char *sString;
+	int channel1DataReady = 0;
+	int channel2DataReady = 0;
 
     uint32_t size = 8192;
     char* command;
@@ -99,6 +101,17 @@ int main(int argc , char *argv[])
     //Receive a message from client
     while( (read_size = recv(client_sock , client_message , 2000 , 0)) > 0 )
     {
+    	// Check if a new waveform is available
+    	if((ret_val = rp_get_signals(&s, &sig_num, &sig_len)) >= 0) {
+				/* Signals acquired in s[][]:
+				 * s[0][i] - TODO
+				 * s[1][i] - Channel ADC1 raw signal
+				 * s[2][i] - Channel ADC2 raw signal
+				 */
+    		channel1DataReady = 1;
+    		channel2DataReady = 1;
+		}
+
     	client_message[read_size] = 0;
     	cmdData = strtok(client_message, ":");
     	if (cmdData != NULL)
@@ -106,46 +119,35 @@ int main(int argc , char *argv[])
     		command = cmdData;
     		cmdData = strtok(NULL, ":");
     	}
-//    	printf("Read size: %7d\n", read_size);
-//    	printf("%c\n",client_message[read_size]);
-//    	printf("Raw message: ");
-//    	printf(client_message);
-//    	printf("\n");
-//    	printf("Command: ");
-//    	printf(command);
-//    	printf("\n");
-//    	printf("Command data: ");
-//    	printf(cmdData);
-//    	printf("\n");
     	if (strcmp(command,"getWaveform")==0)
     	{
-//    		printf("Sending waveform\n");
     		channel = atoi(cmdData);
-    		retries = 1;
-			while(retries >= 0) {
-				if((ret_val = rp_get_signals(&s, &sig_num, &sig_len)) >= 0) {
-					/* Signals acquired in s[][]:
-					 * s[0][i] - TODO
-					 * s[1][i] - Channel ADC1 raw signal
-					 * s[2][i] - Channel ADC2 raw signal
-					 */
+    		switch(channel){
+    			case 0:
+    				if (channel1DataReady == 1) {
+    					channel1DataReady = 0;
+    					sString = (char *) &s[1][0];
+						write(client_sock , sString , 4*size);
+						break;
+    				}
+    				else {
+    					write(client_sock , "not triggered" , 13);
+    					break;
+    				}
+    			case 1:
+    				if (channel2DataReady == 1) {
+    					channel2DataReady = 0;
+    					sString = (char *) &s[2][0];
+						write(client_sock , sString , 4*size);
+						break;
+    				}
+    				else {
+    					write(client_sock , "not triggered" , 13);
+    					break;
+    				}
 
-//    	                for(i = 0; i < MIN(size, sig_len); i++) {
-//    	                    printf("%7d %7d\n", (int)s[1][i], (int)s[2][i]);
-//    	                }
-					sString = (char *) &s[channel+1][0];
-//					printf("%7d\n", (int)sizeof(float));
-					write(client_sock , sString , 4*size);
-					break;
-				}
+    		}
 
-				if(retries-- == 0) {
-					//sString = (char *) &s[channel+1][0];
-					write(client_sock , "not triggered" , 13);
-					break;
-				}
-				usleep(1000);
-			}
     	}
     	else if (strcmp(command,"setRecordlength")==0)
     	{
@@ -170,7 +172,7 @@ int main(int argc , char *argv[])
     		}
     	    /* Setting of parameters in Oscilloscope main module */
     	    if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-    	        fprintf(stderr, "rp_set_params() failed!\n");
+    	        printf("rp_set_params() failed!\n");
     	        write(client_sock , "Error" , 2);
     	    }
     	    else
@@ -184,7 +186,7 @@ int main(int argc , char *argv[])
 			t_params[8] = atoi(cmdData);
     	    /* Setting of parameters in Oscilloscope main module */
     	    if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-    	        fprintf(stderr, "rp_set_params() failed!\n");
+    	        printf("rp_set_params() failed!\n");
     	        write(client_sock , "Error" , 2);
 			}
 			else
@@ -199,7 +201,7 @@ int main(int argc , char *argv[])
 			t_params[6] = atof(cmdData);
     	    /* Setting of parameters in Oscilloscope main module */
     	    if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-    	        fprintf(stderr, "rp_set_params() failed!\n");
+    	        printf("rp_set_params() failed!\n");
     	        write(client_sock , "Error" , 2);
 			}
 			else
@@ -225,7 +227,7 @@ int main(int argc , char *argv[])
 			}
     	    /* Setting of parameters in Oscilloscope main module */
     	    if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-    	        fprintf(stderr, "rp_set_params() failed!\n");
+    	        printf("rp_set_params() failed!\n");
     	        write(client_sock , "Error" , 2);
 			}
 			else
@@ -240,7 +242,7 @@ int main(int argc , char *argv[])
 			t_params[5] = atoi(cmdData);
 			/* Setting of parameters in Oscilloscope main module */
 			if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-				fprintf(stderr, "rp_set_params() failed!\n");
+				printf("rp_set_params() failed!\n");
 				write(client_sock , "Error" , 2);
 			}
 			else
@@ -255,7 +257,7 @@ int main(int argc , char *argv[])
 			t_params[4] = atoi(cmdData);
 			/* Setting of parameters in Oscilloscope main module */
 			if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
-				fprintf(stderr, "rp_set_params() failed!\n");
+				printf("rp_set_params() failed!\n");
 				write(client_sock , "Error" , 2);
 			}
 			else
