@@ -19,6 +19,7 @@
 #include "main_osc.h"
 #include "fpga_osc.h"
 #include "version.h"
+#include "calib.h"
 
 float t_params[PARAMS_NUM] = { 0, 1e6, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -56,6 +57,25 @@ int main(int argc , char *argv[])
         fprintf(stderr, "rp_app_init() failed!\n");
         return -1;
     }
+
+    rp_calib_params_t rp_main_calib_params;
+    rp_default_calib_params(&rp_main_calib_params);
+    if(rp_read_calib_params(&rp_main_calib_params) < 0) {
+        fprintf(stderr, "rp_read_calib_params() failed, using default"
+                " parameters\n");
+    }
+    printf("Calibration fe_ch1_fs_g_hi: %7d\n", rp_main_calib_params.fe_ch1_fs_g_hi);
+    printf("Calibration fe_ch1_dc_offs: %7d\n", rp_main_calib_params.fe_ch1_dc_offs);
+    printf("Calibration be_ch1_dc_offs: %7d\n", rp_main_calib_params.be_ch1_dc_offs);
+    printf("Calibration be_ch1_fs: %7d\n", rp_main_calib_params.be_ch1_fs);
+    printf("Calibration fe_ch2_fs_g_hi: %7d\n", rp_main_calib_params.fe_ch2_fs_g_hi);
+    printf("Calibration fe_ch2_dc_offs: %7d\n", rp_main_calib_params.fe_ch2_dc_offs);
+    printf("Calibration be_ch2_dc_offs: %7d\n", rp_main_calib_params.be_ch2_dc_offs);
+    printf("Calibration be_ch2_fs: %7d\n", rp_main_calib_params.be_ch2_fs);
+    float max_adc_v_ch1 = rp_main_calib_params.fe_ch1_fs_g_hi/(float)((uint64_t)1<<32) * 100;
+    int dc_offset_ch1 = rp_main_calib_params.fe_ch1_dc_offs;
+    float max_adc_v_ch2 = rp_main_calib_params.fe_ch2_fs_g_hi/(float)((uint64_t)1<<32) * 100;
+    int dc_offset_ch2 = rp_main_calib_params.fe_ch2_dc_offs;
 
     /* Setting of parameters in Oscilloscope main module */
     if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
@@ -274,6 +294,40 @@ int main(int argc , char *argv[])
 				else
 				{
 					write(client_sock , "OK" , 2);
+				}
+
+			}
+			else if (strcmp(command,"getCalibrationMaxADC")==0)
+			{
+				channel = atoi(cmdData);
+				switch(channel){
+					case 0:
+						printf("Calibration max ADC %7f\n", max_adc_v_ch1);
+						sString = (char *) &max_adc_v_ch1;
+						write(client_sock , sString , sizeof(float));
+						break;
+					case 1:
+						printf("Calibration max ADC %7f\n", max_adc_v_ch2);
+						sString = (char *) &max_adc_v_ch2;
+						write(client_sock , sString , sizeof(float));
+						break;
+				}
+
+			}
+			else if (strcmp(command,"getCalibrationOffset")==0)
+			{
+				channel = atoi(cmdData);
+				switch(channel){
+					case 0:
+						printf("Calibration offset %7d\n", dc_offset_ch1);
+						sString = (char *) &dc_offset_ch1;
+						write(client_sock , sString , sizeof(int));
+						break;
+					case 1:
+						printf("Calibration offset %7d\n", dc_offset_ch2);
+						sString = (char *) &dc_offset_ch2;
+						write(client_sock , sString , sizeof(int));
+						break;
 				}
 
 			}

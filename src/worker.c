@@ -90,6 +90,9 @@ float               **rp_tmp_signals; /* used for calculation from worker */
 /** Pointers to the FPGA input signal buffers for Channel A and B */
 int                  *rp_fpga_cha_signal, *rp_fpga_chb_signal;
 
+/* Calibration parameters read from EEPROM */
+rp_calib_params_t *rp_calib_params = NULL;
+
 /** @brief Initializes worker module
  *
  * This function starts new worker thread, initializes internal structures 

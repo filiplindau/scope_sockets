@@ -16,6 +16,7 @@
 #define __WORKER_H
 
 #include "main_osc.h"
+#include "calib.h"
 
 /** @defgroup worker_h worker_h
  * @{
