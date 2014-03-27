@@ -376,7 +376,7 @@ void *rp_osc_worker_thread(void *args)
         }
 
         if(state == rp_osc_idle_state) {
-            usleep(2000);
+            usleep(10000);
             continue;
         }
 
@@ -443,7 +443,7 @@ void *rp_osc_worker_thread(void *args)
                     
                     break;
                 } 
-                usleep(100);
+                usleep(1000);
             }
         
 
@@ -490,7 +490,7 @@ void *rp_osc_worker_thread(void *args)
             rp_osc_set_signals(rp_tmp_signals, SIGNAL_LENGTH-1);
         
         /* do not loop too fast */
-        usleep(500);
+        usleep(10000);
     }
 
     return 0;
