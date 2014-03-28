@@ -73,9 +73,9 @@ int main(int argc , char *argv[])
     printf("Calibration be_ch2_dc_offs: %7d\n", rp_main_calib_params.be_ch2_dc_offs);
     printf("Calibration be_ch2_fs: %7d\n", rp_main_calib_params.be_ch2_fs);
     float max_adc_v_ch1 = rp_main_calib_params.fe_ch1_fs_g_hi/(float)((uint64_t)1<<32) * 100;
-    int dc_offset_ch1 = rp_main_calib_params.fe_ch1_dc_offs;
+    int dc_offset_ch1 = rp_main_calib_params.be_ch1_dc_offs;
     float max_adc_v_ch2 = rp_main_calib_params.fe_ch2_fs_g_hi/(float)((uint64_t)1<<32) * 100;
-    int dc_offset_ch2 = rp_main_calib_params.fe_ch2_dc_offs;
+    int dc_offset_ch2 = rp_main_calib_params.be_ch2_dc_offs;
 
     /* Setting of parameters in Oscilloscope main module */
     if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
@@ -177,6 +177,20 @@ int main(int argc , char *argv[])
 							break;
 						}
 
+				}
+
+			}
+			else if (strcmp(command,"getWaveforms")==0)
+			{
+				if (channel1DataReady == 1) {
+					channel1DataReady = 0;
+					sString = (char *) &s[1][0];
+					write(client_sock , sString , 2*4*size);
+					break;
+				}
+				else {
+					write(client_sock , "not triggered" , 13);
+					break;
 				}
 
 			}
