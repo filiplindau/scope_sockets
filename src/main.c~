@@ -287,7 +287,7 @@ int main(int argc , char *argv[])
 				float dly = atof(cmdData);
 				t_params[5] = dly;
 				t_params[0] = dly;
-				t_params[1] = size/125+dly;	// Delay is in microseconds
+				t_params[1] = size/125e6+dly;
 				/* Setting of parameters in Oscilloscope main module */
 				if(rp_set_params((float *)&t_params, PARAMS_NUM) < 0) {
 					printf("rp_set_params() failed!\n");

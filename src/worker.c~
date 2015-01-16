@@ -360,8 +360,8 @@ void *rp_osc_worker_thread(void *args)
                                        * (even if extended becuase of decimation
                                        * will be covered in the acquisition 
                                        */
-                                      curr_params[TRIG_DLY_PARAM].value,
-                                      /*curr_params[MIN_GUI_PARAM].value,*/
+                                      /*curr_params[TRIG_DLY_PARAM].value,*/
+                                      curr_params[MIN_GUI_PARAM].value,
                                       curr_params[TRIG_LEVEL_PARAM].value,
                                       curr_params[TIME_RANGE_PARAM].value) < 0) {
                 fprintf(stderr, "Setting of FPGA registers failed\n");
